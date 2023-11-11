@@ -1,68 +1,45 @@
 import torch
 import os
 from dataset import MyDataset
+from torch import nn
 import torch.nn.functional as F
 from torch.utils.data import Dataset
 from model import MyModel
-from utils import accuracy, save_model
+from model_2 import PseudoLeNet
+from utils import accuracy, save_model, compute_accuracy
 from typing import Tuple
 import numpy as np
 import matplotlib.pyplot as plt
 
 device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
-print(f"Using {device} device")
-
 generator = torch.manual_seed(45)
-
-
-def compute_accuracy(predicted_batch: torch.Tensor, label_batch: torch.Tensor) -> int:
-    """
-    Define the Accuracy metric in the function below by:
-    (1) obtain the maximum for each predicted element in the batch to get the
-        class (it is the maximum index of the num_classes array per batch sample)
-        (look at torch.argmax in the PyTorch documentation)
-    (2) compare the predicted class index with the index in its corresponding
-        neighbor within label_batch
-    (3) sum up the number of affirmative comparisons and return the summation
-
-    Parameters:
-    -----------
-    predicted_batch: torch.Tensor shape: [BATCH_SIZE, N_CLASSES]
-        Batch of predictions
-    label_batch: torch.Tensor shape: [BATCH_SIZE, 1]
-        Batch of labels / ground truths.
-    """
-    pred = predicted_batch.argmax(
-        dim=1, keepdim=True
-    )  # get the index of the max log-probability
-    acum = pred.eq(label_batch.view_as(pred)).sum().item()
-    return acum
+results_path = "results"
+snapshot_path = os.path.join(results_path, "snapshots")
+loss_acc = os.path.join(results_path, "loss_acc.txt")
 
 
 def train_single_epoch(
-    config,
     epoch,
-    train_loader: torch.utils.data.DataLoader,
-    network: torch.nn.Module,
+    dataloader: torch.utils.data.DataLoader,
+    model: torch.nn.Module,
     optimizer: torch.optim,
     criterion: torch.nn.functional,
+    log_interval: int,
 ) -> Tuple[float, float]:
-    # Activate the train=True flag inside the model
-    network.train()
+    model.train()
 
-    avg_loss = None
-    acc = 0.0
     train_loss = []
+    acc = 0.0
     avg_weight = 0.1
-    for batch_idx, (data, target) in enumerate(train_loader):
+    for batch_idx, (data, target) in enumerate(dataloader):
         # Move input data and labels to the device
         data, target = data.to(device), target.to(device)
 
-        # Set network gradients to 0.
+        # Set model gradients to 0.
         optimizer.zero_grad()
 
-        # Forward batch of images through the network
-        output = network(data)
+        # Forward batch of images through the model
+        output = model(data)
 
         # Compute loss
         loss = criterion(output, target)
@@ -77,17 +54,17 @@ def train_single_epoch(
         acc += compute_accuracy(output, target)
         train_loss.append(loss.item())
 
-        if batch_idx % config["log_interval"] == 0:
+        if batch_idx % log_interval == 0:
             print(
                 "Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}".format(
                     epoch,
                     batch_idx * len(data),
-                    len(train_loader.dataset),
-                    100.0 * batch_idx / len(train_loader),
+                    len(dataloader.dataset),
+                    100.0 * batch_idx / len(dataloader),
                     loss.item(),
                 )
             )
-    avg_acc = 100.0 * acc / len(train_loader.dataset)
+    avg_acc = 100.0 * acc / len(dataloader.dataset)
 
     return np.mean(train_loss), avg_acc
 
@@ -98,19 +75,17 @@ def train_single_epoch(
 
 @torch.no_grad()  # decorator: avoid computing gradients
 def test_epoch(
-    criterion,
-    test_loader: torch.utils.data.DataLoader,
-    network: torch.nn.Module,
+    test_loader: torch.utils.data.DataLoader, model: torch.nn.Module, criterion
 ) -> Tuple[float, float]:
     # Dectivate the train=True flag inside the model
-    network.eval()
+    model.eval()
 
     test_loss = []
     acc = 0
     for data, target in test_loader:
         data, target = data.to(device), target.to(device)
 
-        output = network(data)
+        output = model(data)
 
         # Apply the loss criterion and accumulate the loss
         test_loss.append(criterion(output, target).item())
@@ -134,25 +109,23 @@ def test_epoch(
 
 def train_model(config):
     dataset = MyDataset(
-        images_path=os.path.join("data_set", "data", "data"),
-        labels_path=os.path.join("data_set", "chinese_mnist.csv"),
+        images_path=os.path.join("data", "chinese_mnist", "data", "data"),
+        labels_path=os.path.join("data", "chinese_mnist", "chinese_mnist.csv"),
     )
-    my_model = MyModel().to(device)
-
     train_percent = 0.7
-    eval_percent = 0.2
-    test_percent = 0.1
+    # eval_percent = 0
+    test_percent = 0.3
 
-    train_set, eval_set, test_set = torch.utils.data.random_split(
-        dataset, [train_percent, eval_percent, test_percent], generator=generator
+    train_set, test_set = torch.utils.data.random_split(
+        dataset, [train_percent, test_percent], generator=generator
     )
 
     train_loader = torch.utils.data.DataLoader(
         train_set, batch_size=config["batch_size"], shuffle=True, num_workers=2
     )
-    eval_loader = torch.utils.data.DataLoader(
-        eval_set, batch_size=config["batch_size"], shuffle=False, num_workers=2
-    )
+    # eval_loader = torch.utils.data.DataLoader(
+    #     eval_set, batch_size=config["batch_size"], shuffle=False, num_workers=2
+    # )
     test_loader = torch.utils.data.DataLoader(
         test_set,
         batch_size=config["batch_size"],
@@ -160,37 +133,49 @@ def train_model(config):
         num_workers=2,
     )
 
-    criterion = F.nll_loss
-    optimizer = torch.optim.RMSprop(my_model.parameters(), lr=config["learning_rate"])
+    # print("train set")
+    # show_images_from_loader(train_set, train_loader)
+
+    # print("test set")
+    # show_images_from_loader(test_set, test_loader)
 
     train_losses = []
     test_losses = []
     train_accs = []
     test_accs = []
+    # model = PseudoLeNet()
+    model = MyModel()
+    model.to(device)
+
+    optimizer = torch.optim.RMSprop(model.parameters(), lr=config["learning_rate"])
+    criterion = nn.NLLLoss(reduction="mean")
 
     for epoch in range(config["num_epochs"]):
         train_loss, train_acc = train_single_epoch(
-            config=config,
             epoch=epoch,
             criterion=criterion,
             optimizer=optimizer,
-            network=my_model,
-            train_loader=train_loader,
+            model=model,
+            dataloader=train_loader,
+            log_interval=config["log_interval"],
         )
         # eval_single_epoch(...)
 
         train_losses.append(train_loss)
         train_accs.append(train_acc)
-        print(f"accuracy: {train_accs[-1]}")
 
         # TODO: Compute & save the average test loss & accuracy for the current epoch
         # HELP: Review the functions previously defined to implement the train/test epochs
         test_loss, test_accuracy = test_epoch(
-            criterion=criterion, test_loader=test_loader, network=my_model
+            criterion=criterion, test_loader=test_loader, model=model
         )
 
         test_losses.append(test_loss)
         test_accs.append(test_accuracy)
+
+        with open(loss_acc, "a") as f:
+            f.write(f"Epoch {epoch}:\n\ttrain_loss={train_loss:.6f}\ttrain_acc={train_acc:.6f}\n\ttest_loss={test_loss:.6f}\ttest_accuracy={test_accuracy:.6f}\n")
+        save_model(model, os.path.join(snapshot_path, f"{epoch}-model.pth"))
 
     # Plot the plots of the learning curves
     plt.figure(figsize=(10, 8))
@@ -205,19 +190,26 @@ def train_model(config):
     plt.ylabel("Test Accuracy [%]")
     plt.plot(train_accs, label="train")
     plt.plot(test_accs, label="test")
-    return my_model
+    plt.show()
+    return model
 
 
 if __name__ == "__main__":
+    os.makedirs(results_path, exist_ok=True)
+    os.makedirs(snapshot_path, exist_ok=True)
+    try:
+        os.remove(loss_acc)
+    except OSError as e:
+        pass
+
     config = {
         "batch_size": 64,
-        "num_epochs": 20,
+        "num_epochs": 10,
         "test_batch_size": 64,
-        "hidden_size": 128,
-        "num_classes": 15,
-        "num_inputs": 64 * 64,  # w*h*channels
-        "learning_rate": 1e-4,
+        # "num_classes": 15,
+        # "num_inputs": 64 * 64,  # w*h*channels
+        "learning_rate": 1e-3,
         "log_interval": 10,
     }
-    model = train_model(config)
-    save_model(model, "model")
+    print(f"Using {device} device")
+    train_model(config)

@@ -35,8 +35,8 @@ class MyDataset(Dataset):
 
 if __name__ == "__main__":
     dataset = MyDataset(
-        os.path.join("data_set", "data", "data"),
-        os.path.join("data_set", "chinese_mnist.csv"),
+        os.path.join("data", "data", "data"),
+        os.path.join("data", "chinese_mnist.csv"),
     )
     print(len(dataset))
     print(dataset[0])
