@@ -30,7 +30,6 @@ def train_single_epoch(
 
     train_loss = []
     acc = 0.0
-    avg_weight = 0.1
     for batch_idx, (data, target) in enumerate(dataloader):
         # Move input data and labels to the device
         data, target = data.to(device), target.to(device)
