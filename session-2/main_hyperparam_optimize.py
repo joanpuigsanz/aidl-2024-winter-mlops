@@ -6,6 +6,7 @@ from model import MyModel
 from utils import accuracy, save_model
 
 device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
+print(f"Using {device} device")
 
 
 def train_single_epoch(...):

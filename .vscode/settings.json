@@ -1,0 +1,11 @@
+{
+	// Causes the debug view to automatically appear when a breakpoint is hit. This
+	// setting is global and not configurable per-language.
+	// "debug.openDebug": "openOnDebugBreak",
+
+	"[python]": {
+        "editor.defaultFormatter": "ms-python.black-formatter",
+        "editor.formatOnSave": true,
+        "editor.formatOnPaste": true,
+    }
+}
