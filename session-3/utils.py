@@ -18,5 +18,4 @@ def binary_accuracy_with_logits(labels, outputs):
     acc = (preds == labels.view_as(preds)).float().detach().numpy().mean()
     return acc
 
-def save_model(model, path):
-    torch.save(model.state_dict(), path)
+
