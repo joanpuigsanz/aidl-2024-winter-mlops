@@ -192,8 +192,15 @@ def train_model(config: dict):
 
     return { "val_loss": eval_losses[-1]}
 
+def unzip_dataset():
+    extraction_path = os.path.join("data", "chinese_mnist")
+    if not os.path.exists(extraction_path):
+        with zipfile.ZipFile(os.path.join("data", "chinese_mnist.zip"), 'r') as zip_ref:
+            zip_ref.extractall(extraction_path)
+
 
 if __name__ == "__main__":
+    unzip_dataset()
     ray.init(configure_logging=False)
     analysis = tune.run(
         train_model,
