@@ -167,8 +167,6 @@ def train_model(config: dict):
     # loss_fn = nn.NLLLoss(reduction="mean")
     loss_fn = nn.CrossEntropyLoss()
 
-    best_eval_acc = 0
-
     for epoch in range(config["num_epochs"]):
         train_loss, train_acc = train_single_epoch(
             epoch=epoch,
@@ -184,13 +182,15 @@ def train_model(config: dict):
         eval_accs.append(eval_accuracy)
         train_losses.append(train_loss)
         train_accs.append(train_acc)
+        tune.report(val_loss=eval_loss)
 
     best_model = torch.jit.load(best_model_path)
 
     test_loss, test_acc, conf_matrix = eval_single_epoch(fn_loss=loss_fn, test_loader=test_loader, model=best_model)
     print(f"Test loss: {test_loss:.4f}, Test accuracy: {test_acc:.4f}")
 
-    return { "val_loss": eval_losses[-1]}
+    tune.report(test_loss=test_loss)
+    return model
 
 def unzip_dataset():
     extraction_path = os.path.join("data", "chinese_mnist")
@@ -201,7 +201,6 @@ def unzip_dataset():
 
 if __name__ == "__main__":
     unzip_dataset()
-    ray.init(configure_logging=False)
     analysis = tune.run(
         train_model,
         metric="val_loss",
@@ -211,9 +210,9 @@ if __name__ == "__main__":
             # "hyperparam_1": tune.uniform(1, 10),
             # "hyperparam_2": tune.grid_search(["relu", "tanh"]),
             "batch_size": tune.choice([16, 32, 64]),
-            "num_epochs": 10,
+            "num_epochs": 5,
             "test_batch_size": 64,
-            "learning_rate": tune.loguniform(1e-4, 1e-1),
+            "learning_rate": tune.loguniform(1e-4, 1e-2),
             "log_interval": 10,
         },
     )
