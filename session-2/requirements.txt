@@ -5,4 +5,6 @@ torch
 ray
 pandas
 torchvision
+seaborn
+tabulate
 ray[tune]

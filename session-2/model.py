@@ -12,11 +12,7 @@ class ConvBlock(nn.Module):
     ) -> None:
         super().__init__()
 
-        self.conv = nn.Conv2d(
-            in_channels=num_inp_channels,
-            out_channels=num_out_fmaps,
-            kernel_size=kernel_size,
-        )
+        self.conv = nn.Conv2d(in_channels=num_inp_channels, out_channels=num_out_fmaps, kernel_size=kernel_size)
         self.relu = nn.ReLU()
         self.maxpool = nn.MaxPool2d(kernel_size=pool_size)
 
