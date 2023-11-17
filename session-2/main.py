@@ -216,59 +216,6 @@ def unzip_dataset():
 
 
 if __name__ == "__main__":
-    # config = {
-    #     "batch_size": 64,
-    #     "num_epochs": 10,
-    #     "test_batch_size": 64,
-    #     # "num_classes": 15,
-    #     # "num_inputs": 64 * 64,  # w*h*channels
-    #     "learning_rate": 1e-3,
-    #     "log_interval": 10,
-    # }
-    # dataset = MyDataset(
-    #     images_path=os.path.join("data", "chinese_mnist", "data", "data"),
-    #     labels_path=os.path.join("data", "chinese_mnist", "chinese_mnist.csv"),
-    # )
-    # train_size, val_size, test_size = 10000, 2500, 2500
-    #
-    # train_set, eval_set, test_set = torch.utils.data.random_split(dataset, [train_size, val_size, test_size], generator=generator)
-    #
-    # train_loader = torch.utils.data.DataLoader(train_set, batch_size=config["batch_size"], shuffle=True)
-    # eval_loader = torch.utils.data.DataLoader(eval_set, batch_size=config["batch_size"], shuffle=False)
-    # test_loader = torch.utils.data.DataLoader(test_set, batch_size=config["batch_size"], shuffle=False)
-    #
-    # # optimizer = torch.optim.RMSprop(model.parameters(), lr=config["learning_rate"])
-    # # loss_fn = nn.NLLLoss(reduction="mean")
-    # loss_fn = nn.CrossEntropyLoss()
-    # best_model = torch.jit.load(os.path.join(snapshot_path, "best-model.pth"))
-    #
-    # test_loss, test_acc, conf_matrix = eval_single_epoch(fn_loss=loss_fn, test_loader=test_loader, model=best_model)
-    # print(f"Test loss: {test_loss:.4f}, Test accuracy: {test_acc:.4f}")
-    #
-    # # # Plot the plots of the learning curves
-    # # plt.figure(figsize=(10, 8))
-    # # plt.subplot(2, 1, 1)
-    # # plt.xlabel("Epoch")
-    # # plt.ylabel("NLLLoss")
-    # # plt.plot(train_losses, label="train")
-    # # plt.plot(test_losses, label="test")
-    # # plt.legend()
-    # # plt.subplot(2, 1, 2)
-    # # plt.xlabel("Epoch")
-    # # plt.ylabel("Eval Accuracy [%]")
-    # # plt.plot(train_accs, label="train")
-    # # plt.plot(test_accs, label="test")
-    # # plt.show()
-    #
-    # # Confusion matrix
-    # # more pretty plots using https://github.com/wcipriano/pretty-print-confusion-matrix
-    # df_cm = pd.DataFrame(conf_matrix, range(15), range(15))
-    # plt.figure(figsize=(20, 14))
-    # sn.set(font_scale=1.2) # for label size
-    # sn.heatmap(df_cm, fmt='.10g', annot=True, annot_kws={"size": 14}) # font size
-    # plt.show()
-
-
     os.makedirs(results_path, exist_ok=True)
     try:
         os.remove(loss_acc)
