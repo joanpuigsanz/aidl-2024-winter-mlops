@@ -7,6 +7,7 @@ from utils import YelpReviewPolarityDatasetLoader
 
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+generator = torch.manual_seed(45)
 
 
 def train(dataloader):
@@ -17,9 +18,13 @@ def train(dataloader):
     train_acc = 0
     for text, offsets, label in dataloader:
         # TODO complete the training code. The inputs of the model are text and offsets
-        ...
-
+        optimizer.zero_grad()
+        text, offsets, label = text.to(device), offsets.to(device), label.to(device)
+        output = model(text, offsets)
+        loss = criterion(output, label)
         train_loss += loss.item() * len(output)
+        loss.backward()
+        optimizer.step()
         train_acc += (output.argmax(1) == label).sum().item()
 
     # Adjust the learning rate
@@ -35,7 +40,8 @@ def test(dataloader: DataLoader):
     acc = 0
     for text, offsets, label in dataloader:
         # TODO complete the evaluation code. The inputs of the model are text and offsets
-        ...
+        output = model(text, offsets)
+        loss = criterion(output, label)
 
         loss += loss.item() * len(output)
         acc += (output.argmax(1) == label).sum().item()
@@ -64,8 +70,8 @@ if __name__ == "__main__":
 
     # Load the model
     # TODO load the model
-    model = ...
-        
+    model = SentimentAnalysis(vocab_size=VOCAB_SIZE, embed_dim=EMBED_DIM, num_class=NUM_CLASS).to(device)
+
     # We will use CrossEntropyLoss even though we are doing binary classification 
     # because the code is ready to also work for many classes
     criterion = torch.nn.CrossEntropyLoss().to(device)
@@ -77,8 +83,12 @@ if __name__ == "__main__":
     # Split train and val datasets
     # TODO split `train_val_dataset` in `train_dataset` and `valid_dataset`. The size of train dataset should be 95%
 
-    train_dataset, valid_dataset = ...
-    
+    train_val_dataset_len = len(train_val_dataset)
+    train_dataset_len = int(train_val_dataset_len * 0.95)
+    valid_dataset_len = int(train_val_dataset_len * 0.05)
+
+    train_dataset, valid_dataset = torch.utils.data.random_split(train_val_dataset, [train_dataset_len, valid_dataset_len], generator=generator)
+
     # DataLoader needs an special function to generate the batches. 
     # Since we will have inputs of varying size, we will concatenate 
     # all the inputs in a single vector and create a vector with the "offsets" between inputs.

@@ -6,11 +6,11 @@ Then, deploy the model using Google Cloud App Engine.
 ### With Conda
 Create a conda environment by running
 ```
-conda create --name aidl-session5 python=3.8
+conda create --name aidl-session4 python=3.8
 ```
 Then, activate the environment
 ```
-conda activate aidl-session5
+conda activate aidl-session4
 ```
 and install the dependencies
 ```
