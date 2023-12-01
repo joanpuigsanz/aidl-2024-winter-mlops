@@ -21,7 +21,7 @@ class TensorboardLogger(Logger):
         logdir = os.path.join("logs", f"{task}-{datetime.now().strftime('%Y%m%d-%H%M%S')}")
 
         # TODO: Initialize Tensorboard Writer with the previous folder 'logdir'
-
+        self.writer = SummaryWriter(logdir)
 
     def log_reconstruction_training(
         self, 
@@ -34,25 +34,21 @@ class TensorboardLogger(Logger):
 
         # TODO: Log train reconstruction loss to tensorboard.
         #  Tip: use "Reconstruction/train_loss" as tag
-
+        self.writer.add_scalar("Reconstruction/train_loss", train_loss_avg, global_step=epoch)
 
         # TODO: Log validation reconstruction loss to tensorboard.
         #  Tip: use "Reconstruction/val_loss" as tag
-
+        self.writer.add_scalar("Reconstruction/val_loss", train_loss_avg, global_step=epoch)
 
         # TODO: Log a batch of reconstructed images from the validation set.
         #  Use the reconstruction_grid variable returned above.
-
+        self.writer.add_image("Reconstruction/batch_images_validation", reconstruction_grid, global_step=epoch)
 
         # TODO: Log the weights values and grads histograms.
         #  Tip: use f"{name}/value" and f"{name}/grad" as tags
         for name, weight in model.encoder.named_parameters():
-            continue # remove this line when you complete the code
-
-
-        pass
-
-
+            self.writer.add_histogram(f"{name}/value", weight, global_step=epoch)
+            self.writer.add_histogram(f"{name}/grad", weight.grad, global_step=epoch)
 
     def log_classification_training(
         self, 
@@ -64,24 +60,25 @@ class TensorboardLogger(Logger):
         fig: plt.Figure,
     ):
         # TODO: Log confusion matrix figure to tensorboard
+        self.writer.add_figure("Classification/confusion_matrix", fig, global_step=epoch)
 
         # TODO: Log validation loss to tensorboard.
         #  Tip: use "Classification/val_loss" as tag
+        self.writer.add_scalar("Classification/val_loss", val_loss_avg)
 
 
         # TODO: Log validation accuracy to tensorboard.
         #  Tip: use "Classification/val_acc" as tag
+        self.writer.add_scalar("Classification/val_acc", val_acc_avg)
 
 
         # TODO: Log training loss to tensorboard.
         #  Tip: use "Classification/train_loss" as tag
-
+        self.writer.add_scalar("Classification/train_loss", train_loss_avg)
 
         # TODO: Log training accuracy to tensorboard.
         #  Tip: use "Classification/train_acc" as tag
-
-
-        pass
+        self.writer.add_scalar("Classification/train_acc", train_acc_avg)
 
 
     def log_model_graph(
@@ -96,7 +93,7 @@ class TensorboardLogger(Logger):
         provide an instance of the model and a batch of images, like you'd
         do in a forward pass.
         """
-
+        self.writer.add_graph(model, batch)
 
 
 
@@ -118,7 +115,7 @@ class TensorboardLogger(Logger):
         images = torch.cat(list_images)
 
         # TODO: Log latent representations (embeddings) with their corresponding labels (images)
-
+        self.writer.add_embedding(latent, label_img=images)
 
         # Be patient! Projector logs can take a while
 

@@ -25,6 +25,13 @@ class WandbLogger(Logger):
 
         # TODO: Log weights and gradients to wandb. Doc: https://docs.wandb.ai/ref/python/watch
 
+        wandb.watch(
+            model,
+            criterion=None,
+            log="all",
+            log_freq=100,
+            log_graph=True
+        )
 
     def log_reconstruction_training(
         self, 
@@ -36,15 +43,13 @@ class WandbLogger(Logger):
     ):
 
         # TODO: Log train reconstruction loss to wandb
-
+        wandb.log({"Reconstruction/train_loss": train_loss_avg}, step=epoch)
 
         # TODO: Log validation reconstruction loss to wandb
-
+        wandb.log({"Reconstruction/validation_loss": val_loss_avg}, step=epoch)
 
         # TODO: Log a batch of reconstructed images from the validation set
-
-
-        pass
+        wandb.log({"Reconstruction/batch_images_validation": wandb.Image(reconstruction_grid)}, step=epoch)
 
 
     def log_classification_training(
@@ -57,25 +62,24 @@ class WandbLogger(Logger):
         fig: plt.Figure,
     ):
         # TODO: Log confusion matrix figure to wandb
-
+        wandb.log({"Classification/confusion_matrix": wandb.Image(fig)}, step=epoch)
 
         # TODO: Log validation loss to wandb
         #  Tip: use the tag 'Classification/val_loss'
-
+        wandb.log({"Classification/val_loss": val_loss_avg}, step=epoch)
 
         # TODO: Log validation accuracy to wandb
         #  Tip: use the tag 'Classification/val_acc'
-
+        wandb.log({"Classification/val_acc": val_acc_avg}, step=epoch)
 
         # TODO: Log training loss to wandb
         #  Tip: use the tag 'Classification/train_loss'
-
+        wandb.log({"Classification/train_loss": train_loss_avg}, step=epoch)
 
         # TODO: Log train accuracy to wandb
         #  Tip: use the tag 'Classification/train_acc'
+        wandb.log({"Classification/train_acc": train_acc_avg}, step=epoch)
 
-
-        pass
 
     def log_embeddings(
         self, 
@@ -104,6 +108,7 @@ class WandbLogger(Logger):
         embeddings = pd.concat(list_dfs, ignore_index=True)
 
         # TODO: Log latent representations (embeddings)
+        wandb.log({"embeddings": wandb.Table(dataframe=embeddings)})
 
 
     def log_model_graph(

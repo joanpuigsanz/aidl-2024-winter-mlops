@@ -1,5 +1,7 @@
 data
 results
+wandb
+session-5/logs
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
